@@ -3,7 +3,6 @@ package ie.atu.rideservice;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class RideService {
@@ -22,8 +21,9 @@ public class RideService {
         return rideRepository.save(ride);
     }
 
-    public Optional<Ride> getRideById(Long id) {
-        return rideRepository.findById(id);
+    public Ride getRideById(Long id) {
+        return rideRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ride not found with id: " + id));
     }
 
     public Ride updateRide(Long id, Ride rideDetails) {
