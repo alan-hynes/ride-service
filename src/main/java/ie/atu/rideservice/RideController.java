@@ -2,11 +2,11 @@ package ie.atu.rideservice;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
-import java.util.Optional;
 
 @RestController
-@RequestMapping("/rides")
+@RequestMapping("/api/rides")
 public class RideController {
 
     private final RideService rideService;
@@ -17,23 +17,26 @@ public class RideController {
 
     @GetMapping
     public ResponseEntity<List<Ride>> getAllRides() {
-        return ResponseEntity.ok(rideService.getAllRides());
+        List<Ride> rides = rideService.getAllRides();
+        return ResponseEntity.ok(rides);
     }
 
     @PostMapping
     public ResponseEntity<Ride> createRide(@RequestBody Ride ride) {
-        return ResponseEntity.ok(rideService.createRide(ride));
+        Ride createdRide = rideService.createRide(ride);
+        return ResponseEntity.ok(createdRide);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Ride> getRideById(@PathVariable Long id) {
-        Optional<Ride> ride = rideService.getRideById(id);
-        return ride.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        Ride ride = rideService.getRideById(id); // Now returns Ride directly
+        return ResponseEntity.ok(ride);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Ride> updateRide(@PathVariable Long id, @RequestBody Ride rideDetails) {
-        return ResponseEntity.ok(rideService.updateRide(id, rideDetails));
+        Ride updatedRide = rideService.updateRide(id, rideDetails);
+        return ResponseEntity.ok(updatedRide);
     }
 
     @DeleteMapping("/{id}")
