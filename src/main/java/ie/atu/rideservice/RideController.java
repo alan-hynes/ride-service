@@ -1,5 +1,7 @@
 package ie.atu.rideservice;
 
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -7,12 +9,21 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/rides")
+@RequiredArgsConstructor
 public class RideController {
 
     private final RideService rideService;
 
-    public RideController(RideService rideService) {
-        this.rideService = rideService;
+    @PostMapping
+    public ResponseEntity<Ride> createRide(@Valid @RequestBody Ride ride) {
+        Ride createdRide = rideService.createRide(ride);
+        return ResponseEntity.status(201).body(createdRide);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Ride> getRideById(@PathVariable Long id) {
+        Ride ride = rideService.getRideById(id);
+        return ResponseEntity.ok(ride);
     }
 
     @GetMapping
@@ -21,20 +32,8 @@ public class RideController {
         return ResponseEntity.ok(rides);
     }
 
-    @PostMapping
-    public ResponseEntity<Ride> createRide(@RequestBody Ride ride) {
-        Ride createdRide = rideService.createRide(ride);
-        return ResponseEntity.ok(createdRide);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Ride> getRideById(@PathVariable Long id) {
-        Ride ride = rideService.getRideById(id); // Now returns Ride directly
-        return ResponseEntity.ok(ride);
-    }
-
     @PutMapping("/{id}")
-    public ResponseEntity<Ride> updateRide(@PathVariable Long id, @RequestBody Ride rideDetails) {
+    public ResponseEntity<Ride> updateRide(@PathVariable Long id, @Valid @RequestBody Ride rideDetails) {
         Ride updatedRide = rideService.updateRide(id, rideDetails);
         return ResponseEntity.ok(updatedRide);
     }
