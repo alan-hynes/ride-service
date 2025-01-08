@@ -6,81 +6,113 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-public class RideServiceTest {
-
-    @Mock
-    private RideRepository rideRepository;
+class RideServiceTest {
 
     @InjectMocks
     private RideService rideService;
 
+    @Mock
+    private RideRepository rideRepository;
+
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    public void testCreateRide() {
-        // Create a new ride
-        Ride ride = new Ride();
-        ride.setPickupLocation("Location A");
-        ride.setDestinationLocation("Location B");
-        ride.setUserId(1L);
-        ride.setStatus("PENDING");
-
-        // Mock the save method
+    void testCreateRide() {
+        Ride ride = new Ride(1L, 100L, "Location A", "Location B", "ONGOING");
         when(rideRepository.save(any(Ride.class))).thenReturn(ride);
 
-        // Call the createRide method
         Ride createdRide = rideService.createRide(ride);
 
-        // Verify the ride was saved
-        assertThat(createdRide).isNotNull();
-        assertThat(createdRide.getPickupLocation()).isEqualTo("Location A");
-        assertThat(createdRide.getDestinationLocation()).isEqualTo("Location B");
+        assertNotNull(createdRide);
+        assertEquals("Location A", createdRide.getPickupLocation());
+        assertEquals("Location B", createdRide.getDestinationLocation());
+        assertEquals("ONGOING", createdRide.getStatus());
+        verify(rideRepository, times(1)).save(any(Ride.class));
     }
 
     @Test
-    public void testGetRideById() {
-        // Create a new ride
-        Ride ride = new Ride();
-        ride.setId(1L);
-        ride.setPickupLocation("Location A");
-        ride.setDestinationLocation("Location B");
-        ride.setUserId(1L);
-
-        // Mock the findById method to return the ride wrapped in an Optional
+    void testGetRideById() {
+        Ride ride = new Ride(1L, 100L, "Location A", "Location B", "ONGOING");
         when(rideRepository.findById(1L)).thenReturn(Optional.of(ride));
 
-        // Call the getRideById method
-        Ride foundRide = rideService.getRideById(1L);
+        Ride fetchedRide = rideService.getRideById(1L);
 
-        // Verify the ride was found
-        assertThat(foundRide).isNotNull();
-        assertThat(foundRide.getId()).isEqualTo(1L);
-        assertThat(foundRide.getPickupLocation()).isEqualTo("Location A");
-        assertThat(foundRide.getDestinationLocation()).isEqualTo("Location B");
+        assertNotNull(fetchedRide);
+        assertEquals("Location A", fetchedRide.getPickupLocation());
+        assertEquals("Location B", fetchedRide.getDestinationLocation());
+        assertEquals("ONGOING", fetchedRide.getStatus());
+        verify(rideRepository, times(1)).findById(1L);
     }
 
-
     @Test
-    public void testGetRideByIdNotFound() {
-        // Mock the findById method to return an empty Optional
+    void testGetRideById_NotFound() {
         when(rideRepository.findById(1L)).thenReturn(Optional.empty());
 
-        // Call the getRideById method and expect a ResourceNotFoundException
-        Exception exception = assertThrows(ResourceNotFoundException.class, () -> {
-            rideService.getRideById(1L);
-        });
+        Exception exception = assertThrows(ResourceNotFoundException.class, () -> rideService.getRideById(1L));
+        assertEquals("Ride not found with ID: 1", exception.getMessage());
+        verify(rideRepository, times(1)).findById(1L);
+    }
 
-        // Verify the exception message
-        assertThat(exception.getMessage()).isEqualTo("Ride not found with id: 1");
+    @Test
+    void testGetAllRides() {
+        List<Ride> rides = Arrays.asList(
+                new Ride(1L, 100L, "Location A", "Location B", "ONGOING"),
+                new Ride(2L, 101L, "Location C", "Location D", "COMPLETED")
+        );
+        when(rideRepository.findAll()).thenReturn(rides);
+
+        List<Ride> fetchedRides = rideService.getAllRides();
+
+        assertNotNull(fetchedRides);
+        assertEquals(2, fetchedRides.size());
+        verify(rideRepository, times(1)).findAll();
+    }
+
+    @Test
+    void testUpdateRide() {
+        Ride existingRide = new Ride(1L, 100L, "Location A", "Location B", "ONGOING");
+        Ride updatedDetails = new Ride(1L, 100L, "Location X", "Location Y", "COMPLETED");
+
+        when(rideRepository.findById(1L)).thenReturn(Optional.of(existingRide));
+        when(rideRepository.save(existingRide)).thenReturn(existingRide);
+
+        Ride updatedRide = rideService.updateRide(1L, updatedDetails);
+
+        assertNotNull(updatedRide);
+        assertEquals("Location X", updatedRide.getPickupLocation());
+        assertEquals("Location Y", updatedRide.getDestinationLocation());
+        assertEquals("COMPLETED", updatedRide.getStatus());
+        verify(rideRepository, times(1)).findById(1L);
+        verify(rideRepository, times(1)).save(existingRide);
+    }
+
+    @Test
+    void testDeleteRide() {
+        Ride ride = new Ride(1L, 100L, "Location A", "Location B", "ONGOING");
+        when(rideRepository.findById(1L)).thenReturn(Optional.of(ride));
+
+        rideService.deleteRide(1L);
+
+        verify(rideRepository, times(1)).findById(1L);
+        verify(rideRepository, times(1)).delete(ride);
+    }
+
+    @Test
+    void testDeleteRide_NotFound() {
+        when(rideRepository.findById(1L)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(ResourceNotFoundException.class, () -> rideService.deleteRide(1L));
+        assertEquals("Ride not found with ID: 1", exception.getMessage());
+        verify(rideRepository, times(1)).findById(1L);
     }
 }
