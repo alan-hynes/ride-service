@@ -1,29 +1,29 @@
 package ie.atu.rideservice;
 
-
-import org.springframework.amqp.core.*;
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.DirectExchange;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class RabbitMQConfig {
 
-    public static final String EXCHANGE = "service_exchange";
-    public static final String QUEUE = "ride_service_queue";
-    public static final String ROUTING_KEY = "ride_routing_key";
-
     @Bean
-    public TopicExchange exchange() {
-        return new TopicExchange(EXCHANGE);
+    public Queue rideQueue() {
+        return new Queue("rideQueue", true);
     }
 
     @Bean
-    public Queue queue() {
-        return new Queue(QUEUE);
+    public DirectExchange exchange() {
+        return new DirectExchange("appExchange");
     }
 
     @Bean
-    public Binding binding(Queue queue, TopicExchange exchange) {
-        return BindingBuilder.bind(queue).to(exchange).with(ROUTING_KEY);
+    public Binding rideBinding(Queue rideQueue, DirectExchange exchange) {
+        return BindingBuilder.bind(rideQueue).to(exchange).with("ride");
     }
 }
